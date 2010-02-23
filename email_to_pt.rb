@@ -1,3 +1,11 @@
+# This is inspired from
+# http://www.mobilecommons.com/developers/open-source/pivotal-tracker-email-integration/
+#
+# Add a cron job to run this every 5 minutes
+#
+# This script is used only for gmail and its apps. We can change line no 92 to make for all email clients
+
+
 require 'rubygems'
 require 'net/imap'
 require 'net/http'
@@ -5,10 +13,13 @@ require 'tmail'
 require 'pivotal-tracker'
 require 'ruby-debug'
 
-TRACKER_PROJECT_ID = 24159 #57337 is Chronus Rythm
-TRACKER_API_TOKEN = 'a958b88686876e701169de774093c0ad' #This is Mrudhukar's API Token
-USER_NAME = "pivotaltracker@chronus.com"
-PASSWORD = "Chr0nus1"
+TRACKER_PROJECT_ID = 12345 #Add your project id here
+TRACKER_API_TOKEN = 'abcde1234' #Add your API Token http://www.pivotaltracker.com/profile
+
+USER_NAME = "user_name@gmail.com" # User form which we have to fetch the emails
+PASSWORD = "Test123"
+
+CUSTOM_DOMAIN = "domain" #If you want the emails to accepted only form a domain. Leave it blank if you dont have any
 
 class PivotalTrackerStory
 
@@ -16,10 +27,10 @@ class PivotalTrackerStory
     def add_pt_story(project, source)
       puts "**Initiating pt story add**" 
       email_object = TMail::Mail.parse(source)
-      to_adresses = email_object.to.select{|add| add =~ /pivotaltracker.*?@chronus\.com/}
 
-      unless to_adresses.any? && email_object.from[0] =~ /@chronus\.com/
-        puts "**Not a valid story**"
+      #If you are using any custom domains for email, to make sure that the only original stories are added.
+      unless CUSTOM_DOMAIN.blank? && email_object.from[0] =~ /@#{CUSTOM_DOMAIN}\.com/
+        puts "**Not a valid sender**"
         return false
       end
       email = email_object.to_s
@@ -41,10 +52,12 @@ class PivotalTrackerStory
       puts "**Sucessfully added**"
     end
 
+    private
+
     def get_description(body)
       # Tracker has a max_len for description and comments
       # Split up the email body into chunks; use the first one as the description
-      #TODO and add the remainder as comments
+      #TODO Add the remainder as comments
       chunks = body.split(/(.{5000})/m).reject{|token| token.nil? || token.length==0}
       return chunks[0]
     end
